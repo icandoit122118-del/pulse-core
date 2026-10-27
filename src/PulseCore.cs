@@ -1521,23 +1521,45 @@ namespace PulseCore
             using (var brGray = new SolidBrush(ColTextSecondary))
             {
                 g.DrawString("AI 도구 & Agents", fH1, brDark, 84f, 52f);
-                g.DrawString("Auto Maple 백그라운드 봇 & Hyper-V GPU-PV 가상머신 제어", fSub, brGray, 86f, 94f);
+                g.DrawString("로컬 Ollama AI 모델 제어 & Auto Maple 통합 런처", fSub, brGray, 86f, 94f);
             }
 
-            Rectangle c1 = new Rectangle(88, 128, 356, 260);
-            DrawWhiteCard(g, c1);
+            // Card 1: Local Ollama AI Control Center
+            Rectangle cAi = new Rectangle(88, 126, 356, 266);
+            DrawWhiteCard(g, cAi);
             using (var fB = new Font("Malgun Gothic", 9.8f, FontStyle.Bold))
-            using (var fD = new Font("Malgun Gothic", 8.8f))
+            using (var fD = new Font("Malgun Gothic", 8.5f))
             using (var brDark = new SolidBrush(ColTextPrimary))
             using (var brGray = new SolidBrush(ColTextSecondary))
             {
-                g.DrawString("🍁 Auto Maple & Hyper-V 통합 런처", fB, brDark, c1.X + 18f, c1.Y + 18f);
-                g.DrawString("• PrintWindow(PW_RENDERFULLCONTENT) 백그라운드 캡처\n• Windows 11 포커스 우회 백그라운드 키 입력\n• AMD Radeon RX 9060 XT GPU-PV 가상머신 연동", fD, brGray, new RectangleF(c1.X + 18f, c1.Y + 46f, 320f, 64f));
+                g.DrawString("⚡ 로컬 Ollama AI 엔진 (RX 9060 XT 가속)", fB, brDark, cAi.X + 18f, cAi.Y + 16f);
+                string aiDesc = string.IsNullOrEmpty(toastBanner)
+                    ? "• 게임 병행 초고속 모델: qwen3:4b (2.5GB, ~68 tok/s)\n• 코딩 특화: qwen2.5-coder:7b | 심층: gemma4-26b"
+                    : toastBanner;
+                g.DrawString(aiDesc, fD, brGray, new RectangleF(cAi.X + 18f, cAi.Y + 42f, 320f, 42f));
             }
 
-            DrawActionBtn(g, "agent_automaple", new Rectangle(c1.X + 18, c1.Y + 118, 320, 38), "🍁 Auto Maple 실행 (main.py)", true, false);
-            DrawActionBtn(g, "agent_vm", new Rectangle(c1.X + 18, c1.Y + 164, 320, 36), "🖥️ Hyper-V AutoMaple-VM 시작", false, false);
-            DrawActionBtn(g, "agent_github", new Rectangle(c1.X + 18, c1.Y + 208, 320, 36), "🐙 GitHub 저장소 열기 (auto-maple)", false, false);
+            DrawActionBtn(g, "ai_qwen3", new Rectangle(cAi.X + 18, cAi.Y + 90, 320, 38), "⚡ 경량 로컬 AI 대화창 열기 (qwen3:4b · 게임 병행)", true, false);
+            DrawActionBtn(g, "ai_coder", new Rectangle(cAi.X + 18, cAi.Y + 136, 156, 34), "💻 코딩 AI (7B)", false, false);
+            DrawActionBtn(g, "ai_gemma", new Rectangle(cAi.X + 182, cAi.Y + 136, 156, 34), "🧠 심층 AI (26B)", false, false);
+            DrawActionBtn(g, "ai_unload", new Rectangle(cAi.X + 18, cAi.Y + 178, 320, 36), "🧹 로컬 AI 메모리(VRAM/RAM) 즉시 반환 (게임 렉 방지)", false, true);
+            DrawActionBtn(g, "ai_status", new Rectangle(cAi.X + 18, cAi.Y + 222, 320, 32), "📋 로드된 로컬 AI 모델 상태 확인 (ollama ps)", false, false);
+
+            // Card 2: Auto Maple & Hyper-V GPU-PV
+            Rectangle c1 = new Rectangle(88, 404, 356, 210);
+            DrawWhiteCard(g, c1);
+            using (var fB = new Font("Malgun Gothic", 9.8f, FontStyle.Bold))
+            using (var fD = new Font("Malgun Gothic", 8.5f))
+            using (var brDark = new SolidBrush(ColTextPrimary))
+            using (var brGray = new SolidBrush(ColTextSecondary))
+            {
+                g.DrawString("🍁 Auto Maple & Hyper-V GPU-PV 런처", fB, brDark, c1.X + 18f, c1.Y + 16f);
+                g.DrawString("백그라운드 PrintWindow 캡처 + 포커스 우회 입력 지원", fD, brGray, c1.X + 18f, c1.Y + 42f);
+            }
+
+            DrawActionBtn(g, "agent_automaple", new Rectangle(c1.X + 18, c1.Y + 72, 320, 38), "🍁 Auto Maple 실행 (main.py)", true, false);
+            DrawActionBtn(g, "agent_vm", new Rectangle(c1.X + 18, c1.Y + 118, 320, 36), "🖥️ Hyper-V AutoMaple-VM 시작", false, false);
+            DrawActionBtn(g, "agent_github", new Rectangle(c1.X + 18, c1.Y + 162, 320, 34), "🐙 GitHub 저장소 열기 (pulse-core)", false, false);
         }
 
         // =====================================================================
@@ -1846,9 +1868,91 @@ namespace PulseCore
                 await Task.Run(() => ReconstructedEngine.RunCommandHidden("powershell.exe", "-NoProfile -Command \"Start-VM -Name 'AutoMaple-VM'; vmconnect.exe localhost 'AutoMaple-VM'\""));
                 return;
             }
+            if (key == "ai_qwen3")
+            {
+                try
+                {
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "cmd.exe",
+                        Arguments = "/k title Pulse Core - Local AI (qwen3:4b) & echo [Pulse Core] 로컬 AI (qwen3:4b, 68 tok/s) 대화를 시작합니다. 종료하려면 /bye 입력 & ollama run qwen3:4b",
+                        UseShellExecute = true
+                    });
+                    toastBanner = "✓ 경량 로컬 AI (qwen3:4b) 대화창이 실행되었습니다.";
+                    toastColor = ColGood;
+                    this.Invalidate();
+                }
+                catch { }
+                return;
+            }
+            if (key == "ai_coder")
+            {
+                try
+                {
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "cmd.exe",
+                        Arguments = "/k title Pulse Core - Coding AI (qwen2.5-coder:7b) & echo [Pulse Core] 코딩 특화 로컬 AI (qwen2.5-coder:7b) 대화를 시작합니다. & ollama run qwen2.5-coder:7b",
+                        UseShellExecute = true
+                    });
+                    toastBanner = "✓ 코딩 로컬 AI (qwen2.5-coder:7b) 대화창이 실행되었습니다.";
+                    toastColor = ColGood;
+                    this.Invalidate();
+                }
+                catch { }
+                return;
+            }
+            if (key == "ai_gemma")
+            {
+                try
+                {
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "cmd.exe",
+                        Arguments = "/k title Pulse Core - Deep AI (gemma4-26b) & echo [Pulse Core] 심층 분석 로컬 AI (gemma4-26b-a4b-local) 대화를 시작합니다. & ollama run gemma4-26b-a4b-local:latest",
+                        UseShellExecute = true
+                    });
+                    toastBanner = "✓ 심층 로컬 AI (gemma4-26b) 대화창이 실행되었습니다.";
+                    toastColor = ColGood;
+                    this.Invalidate();
+                }
+                catch { }
+                return;
+            }
+            if (key == "ai_unload")
+            {
+                toastBanner = "로컬 AI(Ollama) VRAM/RAM 메모리 반환 중...";
+                this.Invalidate();
+                await Task.Run(() =>
+                {
+                    ReconstructedEngine.RunCommandHidden("ollama", "stop qwen3:4b");
+                    ReconstructedEngine.RunCommandHidden("ollama", "stop qwen3-4b-game:latest");
+                    ReconstructedEngine.RunCommandHidden("ollama", "stop qwen2.5-coder:7b");
+                    ReconstructedEngine.RunCommandHidden("ollama", "stop qwen2.5-coder-7b-local:latest");
+                    ReconstructedEngine.RunCommandHidden("ollama", "stop gemma4-26b-a4b-local:latest");
+                    foreach (var p in Process.GetProcessesByName("ollama_llama_server"))
+                    {
+                        try { p.Kill(); } catch { } finally { p.Dispose(); }
+                    }
+                    ReconstructedEngine.OneKeyMemoryBoost();
+                });
+                toastBanner = "✓ 로컬 AI 모델 언로드 완료 (게임용 GPU VRAM & 시스템 RAM 확보됨)";
+                toastColor = ColGood;
+                RefreshTelemetryAsync();
+                return;
+            }
+            if (key == "ai_status")
+            {
+                string psOut = await Task.Run(() => ReconstructedEngine.RunCommandHidden("ollama", "ps"));
+                string clean = string.IsNullOrWhiteSpace(psOut) ? "현재 메모리에 로드된 모델 없음" : psOut.Trim().Replace("\r\n", " | ");
+                toastBanner = "상태: " + clean;
+                toastColor = ColPrimaryBlue;
+                this.Invalidate();
+                return;
+            }
             if (key == "agent_github")
             {
-                try { Process.Start("https://github.com/icandoit122118-del/auto-maple"); } catch { }
+                try { Process.Start("https://github.com/icandoit122118-del/pulse-core"); } catch { }
                 return;
             }
         }
